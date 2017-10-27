@@ -23,8 +23,23 @@ import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 
 public class PESignerMojoTest extends AbstractMojoTestCase {
 
-    public void testMojo() throws Exception {
-        File pom = getTestFile("target/test-classes/test-pom.xml");
+    public void testMojoWithFile() throws Exception {
+        File pom = getTestFile("target/test-classes/test-file-pom.xml");
+        assertNotNull("null pom", pom);
+        assertTrue("pom not found", pom.exists());
+
+        PESignerMojo mojo = (PESignerMojo) lookupMojo("sign", pom);
+        assertNotNull("plugin not found", mojo);
+        try {
+            mojo.execute();
+        } catch (MojoFailureException e) {
+            // expected
+            assertEquals("keystore element, or keyfile and certfile elements must be set", e.getMessage());
+        }
+    }
+    
+    public void testMojoWithFileSet() throws Exception {
+        File pom = getTestFile("target/test-classes/test-fileset-pom.xml");
         assertNotNull("null pom", pom);
         assertTrue("pom not found", pom.exists());
 

@@ -23,6 +23,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.shared.model.fileset.FileSet;
+import org.apache.maven.shared.model.fileset.util.FileSetManager;
 
 /**
  * Maven plugin for signing PE files.
@@ -32,9 +34,13 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = "sign")
 public class PESignerMojo extends AbstractMojo {
-
-    /** The file to be signed. */
-    @Parameter(required = true)
+	
+    /** The fileset to be signed. */
+    @Parameter
+    private FileSet fileset;
+    
+    /** The file to be signed. Use {@link #fileset} to sign multiple files using the same certificate. */
+    @Parameter
     private File file;
 
     /** The program name embedded in the signature. */
@@ -97,8 +103,13 @@ public class PESignerMojo extends AbstractMojo {
     @Parameter(defaultValue = "false")
     private boolean replace;
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        PESignerHelper helper = new PESignerHelper(new MavenConsole(getLog()), "element");
+    	if (file == null && fileset == null) {
+    		throw new MojoExecutionException("Neither file nor fileset was given");
+    	}
+    	
+        final PESignerHelper helper = new PESignerHelper(new MavenConsole(getLog()), "element");
         
         helper.name(name);
         helper.url(url);
@@ -117,7 +128,20 @@ public class PESignerMojo extends AbstractMojo {
         helper.replace(replace);
         
         try {
-            helper.sign(file);
+        	if (fileset != null) {
+        		final FileSetManager fileSetManager = new FileSetManager();
+                final String[] includedFiles = fileSetManager.getIncludedFiles(fileset);
+        		for (String includedFile : includedFiles) {
+                	final File file = new File(includedFile);
+                	helper.sign(file);
+                }
+        	}
+        	
+        	if (file != null) {
+        		helper.sign(file);
+        	}
+        	
+        	helper.sign(file);
         } catch (SignerException e) {
             throw new MojoFailureException(e.getMessage(), e);
         }
