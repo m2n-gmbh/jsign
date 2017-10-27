@@ -132,7 +132,7 @@ public class PESignerMojo extends AbstractMojo {
         		final FileSetManager fileSetManager = new FileSetManager();
                 final String[] includedFiles = fileSetManager.getIncludedFiles(fileset);
         		for (String includedFile : includedFiles) {
-                	final File file = new File(includedFile);
+                	final File file = new File(fileset.getDirectory(), includedFile);
                 	helper.sign(file);
                 }
         	}
@@ -140,8 +140,6 @@ public class PESignerMojo extends AbstractMojo {
         	if (file != null) {
         		helper.sign(file);
         	}
-        	
-        	helper.sign(file);
         } catch (SignerException e) {
             throw new MojoFailureException(e.getMessage(), e);
         }
